@@ -10,7 +10,7 @@ import java.util.ArrayList;
 public class Launcher
 {
     //Change these before turning in
-    private static int milestone = 2;
+    private static int milestone = 1;
     private static String fileNameMileStone1 = "Output/Milestone 1/Team_07_Sim_n_M31.txt";
     private static String fileNameMileStone2A = "Output/Milestone 2A/Team_07_Sim_n_M11.txt";
     private static String fileNameMileStone2B = "Output/Milestone 2B/Team_07_Sim_n_M11.txt";

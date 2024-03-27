@@ -57,7 +57,7 @@ public class Cache
 
         overHeadSize = (int) (implementationSize - sizeBytes);
 
-        for(int i = 0; i < sets.length; i++) sets[i] = new Set(associativity, numBlocks);
+        for(int i = 0; i < sets.length; i++) sets[i] = new Set(associativity, blockSize);
     }
 
     private boolean isAddressNotInMemory(AddressSplit address)

@@ -98,24 +98,9 @@ public class CPU
 
     public String milestone2A()
     {
-        StringBuilder sb = new StringBuilder();
+        for(File trace : traces) readTraceFile(trace);
 
-        for (File trace : traces) readTraceFile(trace);
-
-        for(Set s : cache.getSets()) for(Block b : s.getBlocks()) if(!b.isValid()) getStatistics().incUnusedBlocks();
-
-        double unusedKB = (getStatistics().getUnusedBlocks() * getCache().getBlockSize()) / 1024d;
-
-        sb.append("\n").append(getStatistics().toString());
-        sb.append(String.format("Unused Cache Space:            %s KB / %s KB = %s%% Waste: $%s\n",
-                String.format("%.2f", unusedKB),
-                getCache().getImplementationSizeKB(),
-                String.format("%.2f", (unusedKB / (getCache().getImplementationSizeKB())) * 100),
-                String.format("%.2f", (unusedKB / (getCache().getImplementationSizeKB())) * (cache.getImplementationSizeKB() * 0.15))));
-
-        sb.append(String.format("Unused Cache Blocks:           %s / %s\n", getStatistics().getUnusedBlocks(), getCache().getNumBlocks()));
-
-        return sb.toString();
+        return statistics.toString();
     }
 
     public void readTraceFile(File trace)

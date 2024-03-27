@@ -1,7 +1,5 @@
 Cache Simulator CS 3853 Spring 2024 - Group #07
 
-Trace file: A-9_new_1.5.pdf.trc
-Trace file: A-10_new_1.5_a.pdf.trc
 Trace file: Trace1.trc
 
 ***** Cache Input Parameters *****
@@ -26,17 +24,19 @@ Cost:                           $86.40 @ ($0.15 / KB)
 Number of Physical Pages:       262144
 Number of Pages for System:     196608
 Size of Page Table Entry:       19 bits
-Total RAM for Page Table(s):    3735552 bytes
+Total RAM for Page Table(s):    1245184 bytes
+
 ***** CACHE SIMULATION RESULTS *****
-Total Cache Accesses:          733221 (Placeholder addresses)
-Instruction Bytes:             733220 SrcDst Bytes: Placeholder
-Cache Hits:                    717249
-Cache Misses:                  15972
---- Compulsory Misses:         15972
+Total Cache Accesses:          36685 (Placeholder addresses)
+Instruction Bytes:             120834 SrcDst Bytes: Placeholder
+Cache Hits:                    35433
+Cache Misses:                  1252
+--- Compulsory Misses:         1252
 --- Conflict Misses:           0
 
 ***** *****  CACHE HIT & MISS RATE:  ***** *****
-Hit Rate:                      97.8217%
-Miss Rate:                     2.1783%
-CPI:                           3.84 Cycles/Instruction
-Unused Cache Space:            Placeholder KB / Placeholder KB = Placeholder% Waste: $PlaceholderUnused Cache Blocks:           Placeholder / Placeholder
+Hit Rate:                      96.5872%
+Miss Rate:                     3.4128%
+CPI:                           3.69 Cycles/Instruction
+Unused Cache Space:            492.55 KB / 576.0 KB = 85.51% Waste: $73.88
+Unused Cache Blocks:           31523 / 32768

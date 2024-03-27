@@ -17,8 +17,8 @@ public class Set
         this.blockSize = blockSize;
         this.accesses = 0;
 
-        blocks = new Block[associativity];
-        for(int i = 0; i < associativity; i++) blocks[i] = new Block();
+        blocks = new Block[blockSize];
+        for(int i = 0; i < blockSize; i++) blocks[i] = new Block();
     }
 
     public Block[] getBlocks()

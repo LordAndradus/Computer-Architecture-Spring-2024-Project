@@ -13,7 +13,6 @@ public class Statistics
     private int cycles;                     //Cycles per cache read/write
     private int instructions;               //Instructions executed in trace file
     private int bytesRead;
-    private int unusedBlocks;
 
     public void incHits()
     {
@@ -51,11 +50,6 @@ public class Statistics
         cycles = hit ? cycles++ : (cycles += (4 * (int) Math.ceil((double) cpu.getCache().getBlockSize() / 4)));
     }
 
-    public void incUnusedBlocks()
-    {
-        unusedBlocks++;
-    }
-
     public void incInstructions()
     {
         instructions++;
@@ -79,11 +73,6 @@ public class Statistics
     public int getReplacements()
     {
         return replacements;
-    }
-
-    public int getUnusedBlocks()
-    {
-        return unusedBlocks;
     }
 
     public int getBytesRead()
@@ -138,6 +127,8 @@ public class Statistics
         sb.append(String.format("Hit Rate:                      %s%%\n", String.format("%.4f", getHitRate())));
         sb.append(String.format("Miss Rate:                     %s%%\n", String.format("%.4f", getMissRate())));
         sb.append(String.format("CPI:                           %s Cycles/Instruction\n", String.format("%.2f", CPI())));
+        sb.append(String.format("Unused Cache Space:            %s KB / %s KB = %s%% Waste: $%s", "Placeholder", "Placeholder", "Placeholder", "Placeholder"));
+        sb.append(String.format("Unused Cache Blocks:           %s / %s", "Placeholder", "Placeholder"));
 
         return sb.toString();
     }
