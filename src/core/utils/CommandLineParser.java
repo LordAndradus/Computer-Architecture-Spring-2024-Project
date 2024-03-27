@@ -68,7 +68,7 @@ public class CommandLineParser
         }
 
         cpu.setCache(new Cache(cpu, cacheSize, blockSize, associativity, instructionPerTimeSlice));
-        cpu.setReplacement(pol);
+        cpu.setReplacementPolicy(pol);
         cpu.setPhysicalMemory(new PhysicalMemory(physicalMemorySize, unusedPhysicalMemory));
         cpu.getPhysicalMemory().setPageTableRAM(cpu.getTraceFiles().size());
         cpu.setTlb(new TranslationLookasideBuffer(cpu.getCache(), cpu.getPhysicalMemory()));

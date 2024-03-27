@@ -28,20 +28,24 @@ public class Block
 
     public int read(AddressSplit address, int access)
     {
-        return data[address.getOffset() % blockSize];
+        if(queueNumber == 0) queueNumber = access;
+        return data[address.getOffset()];
     }
 
     public void fill(AddressSplit address, int data, int access)
     {
         if(queueNumber == 0) queueNumber = access;
-        this.data[address.getOffset() % blockSize] = data;
+        this.data[address.getOffset()] = data;
         setValid(true);
         setDirty(true);
     }
 
-    public void writeThrough(AddressSplit address, int data, int access)
+    public void writeThrough(AddressSplit address, int[] data)
     {
-
+        this.tag = address.getTag();
+        this.data = data;
+        setValid(true);
+        setDirty(false);
     }
 
     public boolean isValid()

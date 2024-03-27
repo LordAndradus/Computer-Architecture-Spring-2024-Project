@@ -6,6 +6,7 @@ import data.Block;
 import data.Policy;
 import data.Set;
 
+import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -21,13 +22,13 @@ public class Cache
     private final int overHeadSize;
     private final long implementationSize;
     private final double implementationSizeKB;
-    private int instructionPerTimeSlice;
+    private final int instructionPerTimeSlice;
 
     //Cache memory
     Set[] sets;
 
     //CPU
-    CPU reference;
+    CPU referenceCPU;
 
     //Bitties
     private final int tagBits;
@@ -36,7 +37,7 @@ public class Cache
 
     public Cache(CPU cpu, int size, int blockSize, int associativity, int instructionPerTimeSlice)
     {
-        reference = cpu;
+        referenceCPU = cpu;
         long sizeBytes = Calculator.getBytes(size + "KB");
         this.size = size;
         this.blockSize = blockSize;
@@ -62,45 +63,85 @@ public class Cache
         for(int i = 0; i < sets.length; i++) sets[i] = new Set(associativity, blockSize);
     }
 
-    public boolean addressInCache(AddressSplit address)
+    public boolean addressNotInCache(AddressSplit address)
     {
         return Objects.isNull(sets[address.getIndex()].getValidBlock(address));
     }
 
-    public boolean checkAddress(AddressSplit address)
+    public Block getReplacementBlock(AddressSplit address)
     {
-        if(addressInCache(address))
+        Set set = getSets()[address.getIndex()];
+        Block removable;
+
+        if(getCPU().getReplacementPolicy() == Policy.RoundRobin) removable = set.getFirstInQueue();
+        else removable = set.getRandomBlock();
+
+        return removable;
+    }
+
+    public void insertAddress(AddressSplit address)
+    {
+        Set set = sets[address.getIndex()];
+        Block removable = getReplacementBlock(address);
+
+        if(Objects.isNull(removable))
         {
-            Set set = sets[address.getIndex()];
-            Block removable = reference.getReplacementBlock(address);
-
-            if(Objects.isNull(removable))
-            {
-                System.err.println("ERROR::Unaccounted error - Block should not be null.");
-                System.exit(0);
-            }
-
-            //Write back to physical memory
-            if(removable.isDirty())
-            {
-                int[] removedData = removable.getData();
-            }
-
-            return false;
+            System.err.println("ERROR::Unaccounted error - Block should not be null.");
+            System.exit(0);
         }
 
+        //Write back to physical memory
+        if(removable.isDirty())
+        {
+            int[] removedData = removable.getData();
+            int removedAddress = (removable.getTag() * sets.length + address.getIndex()) * getBlockSize();
+            for(int i = 0; i < blockSize; i++) getCPU().physicalMemoryWrite(new AddressSplit(address, i), removedData[i]);
+            getCPU().getStatistics().incConflictMisses();
+        }
+
+        int[] data = new int[blockSize];
+        for(int i = 0; i < blockSize; i++) data[i] = getCPU().physicalMemoryRead(new AddressSplit(address, i));
+        getCPU().getStatistics().incCompulsoryMisses();
+        removable.writeThrough(address, data);
+    }
+
+    public boolean checkAddress(AddressSplit address)
+    {
+        if(addressNotInCache(address))
+        {
+            insertAddress(address);
+            return false;
+        }
         return true;
+    }
+
+    public Set retrieveSet(AddressSplit address)
+    {
+        getCPU().getStatistics().incHits();
+        return sets[address.getIndex()];
+    }
+
+    public Set houseKeeping(int addr)
+    {
+        AddressSplit address = new AddressSplit(addr, indexBits, blockOffsetBits);
+        if(checkAddress(address)) return null;
+
+        return retrieveSet(address);
     }
 
     public boolean read(int addr)
     {
-        AddressSplit address = new AddressSplit(addr, indexBits, blockOffsetBits);
+        Set set = houseKeeping(addr);
+        if(Objects.isNull(set)) return false;
+        set.readByte(new AddressSplit(addr, indexBits, blockOffsetBits));
+        return true;
+    }
 
-        if(addressInCache(address))
-        {
-
-        }
-
+    public boolean write(int addr, int data)
+    {
+        Set set = houseKeeping(addr);
+        if(Objects.isNull(set)) return false;
+        set.writeByte(new AddressSplit(addr, indexBits, blockOffsetBits), data);
         return true;
     }
 
@@ -147,6 +188,11 @@ public class Cache
     public double getImplementationSizeKB()
     {
         return implementationSizeKB;
+    }
+
+    public CPU getCPU()
+    {
+        return referenceCPU;
     }
 
     public Set[] getSets()

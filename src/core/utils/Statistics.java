@@ -12,6 +12,7 @@ public class Statistics
     private int conflictMisses;             //Valid bit was on, but the tag did not match in the set
     private int cycles;                     //Cycles per cache read/write
     private int instructions;               //Instructions executed in trace file
+    private int bytesRead;
 
     public void incHits()
     {
@@ -45,7 +46,8 @@ public class Statistics
 
     public void incCycles(CPU cpu, boolean hit, int bytes)
     {
-        cycles = hit ? cycles++ : (cycles += (4 * (int) Math.ceil(cpu.getCache().getBlockSize() / 4)));
+        bytesRead += bytes;
+        cycles = hit ? cycles++ : (cycles += (4 * (int) Math.ceil((double) cpu.getCache().getBlockSize() / 4)));
     }
 
     public void incInstructions()
@@ -71,6 +73,11 @@ public class Statistics
     public int getReplacements()
     {
         return replacements;
+    }
+
+    public int getBytesRead()
+    {
+        return bytesRead;
     }
 
     public int getCompulsoryMisses()
@@ -109,16 +116,19 @@ public class Statistics
         StringBuilder sb = new StringBuilder();
 
         sb.append("***** CACHE SIMULATION RESULTS *****\n");
-        sb.append(String.format("Total Cache Accesses:         %s\n", getAccesses()));
-        sb.append(String.format("Cache Hits:                   %s\n", getHits()));
-        sb.append(String.format("Cache Misses:                 %s\n", getMisses()));
-        sb.append(String.format("--- Compulsory Misses:        %s\n", getCompulsoryMisses()));
-        sb.append(String.format("--- Conflict Misses:          %s\n\n", getConflictMisses()));
+        sb.append(String.format("Total Cache Accesses:          %s (%s addresses)\n", getAccesses(), "Placeholder"));
+        sb.append(String.format("Instruction Bytes:             %s SrcDst Bytes: %s\n", getBytesRead(), "Placeholder"));
+        sb.append(String.format("Cache Hits:                    %s\n", getHits()));
+        sb.append(String.format("Cache Misses:                  %s\n", getMisses()));
+        sb.append(String.format("--- Compulsory Misses:         %s\n", getCompulsoryMisses()));
+        sb.append(String.format("--- Conflict Misses:           %s\n\n", getConflictMisses()));
 
         sb.append("***** *****  CACHE HIT & MISS RATE:  ***** *****\n");
-        sb.append(String.format("Hit Rate:                     %s%%\n", String.format("%.4f", getHitRate())));
-        sb.append(String.format("Miss Rate:                    %s%%\n", String.format("%.4f", getMissRate())));
-        sb.append(String.format("CPI:                          %s Cycles/Instruction\n", String.format("%.2f", CPI())));
+        sb.append(String.format("Hit Rate:                      %s%%\n", String.format("%.4f", getHitRate())));
+        sb.append(String.format("Miss Rate:                     %s%%\n", String.format("%.4f", getMissRate())));
+        sb.append(String.format("CPI:                           %s Cycles/Instruction\n", String.format("%.2f", CPI())));
+        sb.append(String.format("Unused Cache Space:            %s KB / %s KB = %s%% Waste: $%s", "Placeholder", "Placeholder", "Placeholder", "Placeholder"));
+        sb.append(String.format("Unused Cache Blocks:           %s / %s", "Placeholder", "Placeholder"));
 
         return sb.toString();
     }

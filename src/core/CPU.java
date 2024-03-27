@@ -2,6 +2,7 @@ package core;
 
 import core.utils.AddressSplit;
 import core.utils.Calculator;
+import core.utils.Statistics;
 import data.Block;
 import data.Policy;
 import data.Set;
@@ -12,8 +13,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Objects;
 
 public class CPU
 {
@@ -22,6 +22,11 @@ public class CPU
     private PhysicalMemory physicalMemory;
     private TranslationLookasideBuffer tlb;
     private Policy replacement;
+    private Statistics statistics;
+
+    {
+        statistics = new Statistics();
+    }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Emulation specifics
@@ -42,13 +47,9 @@ public class CPU
                 String line;
                 int addressCounter = 20;
 
-                while (br.ready() && addressCounter > 0)
+                while (Objects.nonNull(line = br.readLine()) && addressCounter > 0)
                 {
-                    line = br.readLine();
                     if (line.isBlank()) continue;
-
-                    Pattern addressPattern = Pattern.compile("[0-9aA-zZ]{8}");
-                    Matcher addressMatcher = addressPattern.matcher(line);
 
                     String[] elements = Arrays.stream(line.split(" ")).filter(str -> !str.isBlank()).toArray(String[]::new);
 
@@ -95,14 +96,11 @@ public class CPU
         return sb.toString();
     }
 
-    public String milestone2()
+    public String milestone2A()
     {
-        for(File trace : traces)
-        {
-            readTraceFile(trace);
-        }
+        for(File trace : traces) readTraceFile(trace);
 
-        return null;
+        return statistics.toString();
     }
 
     public void readTraceFile(File trace)
@@ -111,17 +109,20 @@ public class CPU
         {
             String line = "sample";
 
-            while(br.ready())
+            while(Objects.nonNull(line = br.readLine()))
             {
-                line = br.readLine();
-                if(line.isBlank()) continue; //Increment instructions count
+                if(line.isBlank())
+                {
+                    getStatistics().incInstructions();
+                    continue;
+                }
 
                 String[] elements = Arrays.stream(line.split(" ")).filter(str -> !str.isBlank()).toArray(String[]::new);
 
                 int bytes = 4;
                 boolean hit = false;
 
-                if(Calculator.hashString(elements[0]) == Calculator.hashString(elements[1]))
+                if(Calculator.hashString(elements[0]) == Calculator.hashString("EIP"))
                 {
                     int address = (int) Long.parseLong(elements[2], 16);
 
@@ -131,6 +132,28 @@ public class CPU
                             ));
 
                     hit = cache.read(address);
+
+                    getStatistics().incCycles(this, hit, bytes);
+                    getStatistics().incCycle2();
+                }
+                else
+                {
+                    int dstAddr = Calculator.hexToInteger(elements[1]);
+                    int srcAddr = Calculator.hexToInteger(elements[4]);
+
+                    if(dstAddr != 0)
+                    {
+                        if(!elements[3].equals("--------")) cache.write(dstAddr, Calculator.hexToInteger(elements[3]));
+                        else hit = cache.read(dstAddr);
+
+                        getStatistics().incCycles(this, hit, bytes);
+                    }
+
+                    if(srcAddr != 0)
+                    {
+                        hit = cache.read(srcAddr);
+                        getStatistics().incCycles(this, hit, bytes);
+                    }
                 }
             }
         }
@@ -146,15 +169,15 @@ public class CPU
         }
     }
 
-    public Block getReplacementBlock(AddressSplit address)
+    public void physicalMemoryWrite(AddressSplit address, int data)
     {
-        Set set = cache.getSets()[address.getIndex()];
-        Block removable;
+        //In the future, convert physical memory address from virtual address using TLB
+        physicalMemory.write(address, data);
+    }
 
-        if(replacement == Policy.RoundRobin) removable = set.getFirstInQueue();
-        else removable = set.getRandomBlock();
-
-        return removable;
+    public int physicalMemoryRead(AddressSplit address)
+    {
+        return physicalMemory.read(address);
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -201,14 +224,19 @@ public class CPU
         this.tlb = tlb;
     }
 
-    public Policy getReplacement()
+    public Policy getReplacementPolicy()
     {
         return replacement;
     }
 
-    public void setReplacement(Policy replacement)
+    public void setReplacementPolicy(Policy replacement)
     {
         this.replacement = replacement;
+    }
+
+    public Statistics getStatistics()
+    {
+        return statistics;
     }
 
     public String information()

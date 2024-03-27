@@ -19,35 +19,18 @@ public class Set
         this.accesses = 0;
 
         blocks = new Block[blockSize];
-        for(Block block : blocks) block = new Block();
+        for(int i = 0; i < blockSize; i++) blocks[i] = new Block();
+    }
+
+    public Block[] getBlocks()
+    {
+        return blocks;
     }
 
     public Block getValidBlock(AddressSplit address)
     {
-        Block current = null;
-
-        for(Block block : blocks) if(block.isValid() && block.getTag() == address.getTag())
-        {
-            current = block;
-            break;
-        }
-
-        if(Objects.isNull(current))
-        {
-            try
-            {
-                System.err.printf("CRITICAL FAILURE::Failed to fetch block for 0x%s!\n", address.getAddress());
-                throw new Exception("Block was null");
-            }
-            catch(Exception e)
-            {
-                System.err.println(e.getMessage());
-                e.printStackTrace();
-                System.exit(0);
-            }
-        }
-
-        return current;
+        for(Block block : blocks) if (block.getTag() == address.getTag() && block.isValid()) return block;
+        return null;
     }
 
     public Block getFirstInQueue()
@@ -67,6 +50,8 @@ public class Set
 
     public Block getRandomBlock()
     {
+        for(Block b : blocks) if(!b.isValid()) return b;
+
         return blocks[ThreadLocalRandom.current().nextInt(0, associativity)];
     }
 
