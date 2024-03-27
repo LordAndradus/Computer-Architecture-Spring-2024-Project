@@ -6,9 +6,6 @@ import data.Block;
 import data.Policy;
 import data.Set;
 
-import java.awt.*;
-import java.io.File;
-import java.util.ArrayList;
 import java.util.Objects;
 
 public class Cache
@@ -63,85 +60,70 @@ public class Cache
         for(int i = 0; i < sets.length; i++) sets[i] = new Set(associativity, blockSize);
     }
 
-    public boolean addressNotInCache(AddressSplit address)
+    private boolean isAddressNotInMemory(AddressSplit address)
     {
         return Objects.isNull(sets[address.getIndex()].getValidBlock(address));
     }
 
-    public Block getReplacementBlock(AddressSplit address)
+    private void insertAddress(AddressSplit address)
     {
-        Set set = getSets()[address.getIndex()];
+        Set set = sets[address.getIndex()];
         Block removable;
 
         if(getCPU().getReplacementPolicy() == Policy.RoundRobin) removable = set.getFirstInQueue();
         else removable = set.getRandomBlock();
 
-        return removable;
-    }
-
-    public void insertAddress(AddressSplit address)
-    {
-        Set set = sets[address.getIndex()];
-        Block removable = getReplacementBlock(address);
-
         if(Objects.isNull(removable))
         {
-            System.err.println("ERROR::Unaccounted error - Block should not be null.");
+            System.err.println("ERROR::Unaccounted error - Block should not be null");
             System.exit(0);
         }
 
-        //Write back to physical memory
         if(removable.isDirty())
         {
             int[] removedData = removable.getData();
-            int removedAddress = (removable.getTag() * sets.length + address.getIndex()) * getBlockSize();
-            for(int i = 0; i < blockSize; i++) getCPU().physicalMemoryWrite(new AddressSplit(address, i), removedData[i]);
-            getCPU().getStatistics().incConflictMisses();
+            int removedAddr = (removable.getTag() * sets.length + address.getIndex()) * blockSize;
+            AddressSplit removedAddress = new AddressSplit(removedAddr, indexBits, blockOffsetBits);
+            for(int i = 0; i < blockSize; i++) getCPU().getPhysicalMemory().write(new AddressSplit(removedAddress, i), removedData[i]);
+            getCPU().getStatistics().incCompulsoryMisses();
         }
 
+        //Record new data block
         int[] data = new int[blockSize];
-        for(int i = 0; i < blockSize; i++) data[i] = getCPU().physicalMemoryRead(new AddressSplit(address, i));
+        for(int i = 0; i < blockSize; i++) data[i] = getCPU().getPhysicalMemory().read(new AddressSplit(address, i));
         getCPU().getStatistics().incCompulsoryMisses();
-        removable.writeThrough(address, data);
+        removable.fillBlock(address, data);
     }
 
-    public boolean checkAddress(AddressSplit address)
+    protected boolean read(int addr)
     {
-        if(addressNotInCache(address))
+        AddressSplit address = new AddressSplit(addr, indexBits, blockOffsetBits);
+
+        if(isAddressNotInMemory(address))
         {
             insertAddress(address);
             return false;
         }
+
+        Set set = sets[address.getIndex()];
+        getCPU().getStatistics().incHits();
+        int data = set.readByte(address);
         return true;
     }
 
-    public Set retrieveSet(AddressSplit address)
-    {
-        getCPU().getStatistics().incHits();
-        return sets[address.getIndex()];
-    }
-
-    public Set houseKeeping(int addr)
+    protected boolean write(int addr, int data)
     {
         AddressSplit address = new AddressSplit(addr, indexBits, blockOffsetBits);
-        if(checkAddress(address)) return null;
 
-        return retrieveSet(address);
-    }
+        if(isAddressNotInMemory(address))
+        {
+            insertAddress(address);
+            return false;
+        }
 
-    public boolean read(int addr)
-    {
-        Set set = houseKeeping(addr);
-        if(Objects.isNull(set)) return false;
-        set.readByte(new AddressSplit(addr, indexBits, blockOffsetBits));
-        return true;
-    }
-
-    public boolean write(int addr, int data)
-    {
-        Set set = houseKeeping(addr);
-        if(Objects.isNull(set)) return false;
-        set.writeByte(new AddressSplit(addr, indexBits, blockOffsetBits), data);
+        Set set = sets[address.getIndex()];
+        getCPU().getStatistics().incHits();
+        set.writeByte(address, data);
         return true;
     }
 

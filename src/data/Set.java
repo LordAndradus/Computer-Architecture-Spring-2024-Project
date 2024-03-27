@@ -2,7 +2,6 @@ package data;
 
 import core.utils.AddressSplit;
 
-import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Set
@@ -85,7 +84,7 @@ public class Set
     public void writeByte(AddressSplit address, int data)
     {
         Block current = getValidBlock(address);
-        current.fill(address, data, ++accesses);
+        current.write(address, data, ++accesses);
     }
 
     public void writeBytes(AddressSplit address, int bytes)
@@ -95,7 +94,7 @@ public class Set
         for(int i = 0; i < bytes; i++)
         {
             Block current = getValidBlock(new AddressSplit(address, i));
-            current.fill(address, data[i], ++accesses);
+            current.write(address, data[i], ++accesses);
         }
     }
 }

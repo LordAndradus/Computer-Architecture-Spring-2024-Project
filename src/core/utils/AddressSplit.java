@@ -55,4 +55,9 @@ public class AddressSplit
     {
         return address;
     }
+
+    public void setAddress(int address)
+    {
+        this.address = address;
+    }
 }

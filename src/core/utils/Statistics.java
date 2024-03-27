@@ -46,7 +46,7 @@ public class Statistics
 
     public void incCycles(CPU cpu, boolean hit, int bytes)
     {
-        bytesRead += bytes;
+        bytesRead += 1;
         cycles = hit ? cycles++ : (cycles += (4 * (int) Math.ceil((double) cpu.getCache().getBlockSize() / 4)));
     }
 

@@ -28,15 +28,15 @@ Number of Pages for System:     196608
 Size of Page Table Entry:       19 bits
 Total RAM for Page Table(s):    3735552 bytes
 ***** CACHE SIMULATION RESULTS *****
-Total Cache Accesses:          31943 (Placeholder addresses)
-Instruction Bytes:             2262242 SrcDst Bytes: Placeholder
-Cache Hits:                    15971
+Total Cache Accesses:          733221 (Placeholder addresses)
+Instruction Bytes:             733220 SrcDst Bytes: Placeholder
+Cache Hits:                    717249
 Cache Misses:                  15972
---- Compulsory Misses:         15971
---- Conflict Misses:           1
+--- Compulsory Misses:         15972
+--- Conflict Misses:           0
 
 ***** *****  CACHE HIT & MISS RATE:  ***** *****
-Hit Rate:                      49.9984%
-Miss Rate:                     50.0016%
-CPI:                           22.94 Cycles/Instruction
+Hit Rate:                      97.8217%
+Miss Rate:                     2.1783%
+CPI:                           3.84 Cycles/Instruction
 Unused Cache Space:            Placeholder KB / Placeholder KB = Placeholder% Waste: $PlaceholderUnused Cache Blocks:           Placeholder / Placeholder

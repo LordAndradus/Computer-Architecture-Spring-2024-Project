@@ -32,7 +32,7 @@ public class Block
         return data[address.getOffset()];
     }
 
-    public void fill(AddressSplit address, int data, int access)
+    public void write(AddressSplit address, int data, int access)
     {
         if(queueNumber == 0) queueNumber = access;
         this.data[address.getOffset()] = data;
@@ -40,7 +40,7 @@ public class Block
         setDirty(true);
     }
 
-    public void writeThrough(AddressSplit address, int[] data)
+    public void fillBlock(AddressSplit address, int[] data)
     {
         this.tag = address.getTag();
         this.data = data;
