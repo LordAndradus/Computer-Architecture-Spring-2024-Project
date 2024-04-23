@@ -7,12 +7,14 @@ public class Statistics
     //Access = Hits + Misses
     //Miss -> Either the valid bit wasn't on, and it was accessed, or the tag didn't match.
     private int hits;                       //Valid bit was on and the tag matched
+    private int addressAccess;
     private int replacements;               //Counting how many times something was replaced
     private int compulsoryMisses;           //Valid bit wasn't on.
     private int conflictMisses;             //Valid bit was on, but the tag did not match in the set
     private int cycles;                     //Cycles per cache read/write
     private int instructions;               //Instructions executed in trace file
-    private int bytesRead;
+    private int instructionBytes;           //Bytes from reading instructions.
+    private int memoryBytes;                //Bytes from src and destination addresses. MUST be divisible by 4.
     private int unusedBlocks;
 
     public void incHits()
@@ -47,8 +49,17 @@ public class Statistics
 
     public void incCycles(CPU cpu, boolean hit, int bytes)
     {
-        bytesRead += bytes;
         cycles = hit ? cycles++ : (cycles += (4 * (int) Math.ceil((double) cpu.getCache().getBlockSize() / 4)));
+    }
+
+    public void incInstructionBytes(int bytes)
+    {
+        instructionBytes += bytes;
+    }
+
+    public void incMemoryBytes()
+    {
+        memoryBytes += 4;
     }
 
     public void incUnusedBlocks()
@@ -61,6 +72,11 @@ public class Statistics
         instructions++;
     }
 
+    public void incAddressAccess()
+    {
+        addressAccess++;
+    }
+
     public int getAccesses()
     {
         return getHits() + getMisses();
@@ -69,6 +85,10 @@ public class Statistics
     public int getHits()
     {
         return hits;
+    }
+    public int getAddressesAccessed()
+    {
+        return addressAccess;
     }
 
     public int getMisses()
@@ -86,9 +106,14 @@ public class Statistics
         return unusedBlocks;
     }
 
-    public int getBytesRead()
+    public int getInstructionBytes()
     {
-        return bytesRead;
+        return instructionBytes;
+    }
+
+    public int getMemoryBytes()
+    {
+        return memoryBytes;
     }
 
     public int getCompulsoryMisses()
@@ -127,8 +152,8 @@ public class Statistics
         StringBuilder sb = new StringBuilder();
 
         sb.append("***** CACHE SIMULATION RESULTS *****\n");
-        sb.append(String.format("Total Cache Accesses:          %s (%s addresses)\n", getAccesses(), "Placeholder"));
-        sb.append(String.format("Instruction Bytes:             %s SrcDst Bytes: %s\n", getBytesRead(), "Placeholder"));
+        sb.append(String.format("Total Cache Accesses:          %s (%s addresses)\n", getAccesses(), getAddressesAccessed()));
+        sb.append(String.format("Instruction Bytes:             %s SrcDst Bytes: %s\n", getInstructionBytes(), getMemoryBytes()));
         sb.append(String.format("Cache Hits:                    %s\n", getHits()));
         sb.append(String.format("Cache Misses:                  %s\n", getMisses()));
         sb.append(String.format("--- Compulsory Misses:         %s\n", getCompulsoryMisses()));

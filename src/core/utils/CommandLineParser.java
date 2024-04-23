@@ -21,7 +21,7 @@ public class CommandLineParser
         int cacheSize = 8;
         int blockSize = 8;
         int associativity = 1;
-        int unusedPhysicalMemory = 0;
+        double usedPhysicalMemory = 0;
         int instructionPerTimeSlice = -1;
         Policy pol = Policy.RoundRobin;
         long physicalMemorySize = Calculator.getBytes("1GB");
@@ -49,7 +49,7 @@ public class CommandLineParser
                     cacheSize = (int) CommandLineParser.powChecker(Integer.parseInt(argument), 8, 8192, "Cache Size");
                     break;
                 case "-b":
-                    blockSize = (int) CommandLineParser.powChecker(Integer.parseInt(argument), 8, 64, "Block Size");
+                    blockSize = (int) CommandLineParser.powChecker(Integer.parseInt(argument), 1, 64, "Block Size");
                     break;
                 case "-a":
                     associativity = (int) CommandLineParser.powChecker(Integer.parseInt(argument), 1, 16, "Associativity");
@@ -59,7 +59,11 @@ public class CommandLineParser
                             Calculator.getBytes("1MB"), Calculator.getBytes("4GB"), "Physical Memory");
                     break;
                 case "-u":
-                    unusedPhysicalMemory = (int) paramChecker(Integer.parseInt(argument), 0, 100, "Unused Physical Memory");
+                    double check = Double.parseDouble(argument);
+                    double min = 0d, max = 100d;
+                    boolean condition = (check < min || check > max);
+                    if(condition) System.err.printf("WARNING::%s is invalid. It must be between %s to %s, not %s\n", "Used Physical Memory", min, max, check);
+                    usedPhysicalMemory = condition ? min : check;
                     break;
                 case "-n":
                     instructionPerTimeSlice = Integer.parseInt(argument);
@@ -69,7 +73,7 @@ public class CommandLineParser
 
         cpu.setCache(new Cache(cpu, cacheSize, blockSize, associativity, instructionPerTimeSlice));
         cpu.setReplacementPolicy(pol);
-        cpu.setPhysicalMemory(new PhysicalMemory(physicalMemorySize, unusedPhysicalMemory));
+        cpu.setPhysicalMemory(new PhysicalMemory(physicalMemorySize, usedPhysicalMemory));
         cpu.getPhysicalMemory().setPageTableRAM(cpu.getTraceFiles().size());
         cpu.setTlb(new TranslationLookasideBuffer(cpu.getCache(), cpu.getPhysicalMemory()));
 

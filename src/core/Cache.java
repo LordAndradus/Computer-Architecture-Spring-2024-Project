@@ -8,6 +8,10 @@ import data.Set;
 
 import java.util.Objects;
 
+/*
+ * TODO: When we go over a block offset boundary, we treat it as another access. IE block offset 4 of 4, with 4 bytes read, might be another access
+ */
+
 public class Cache
 {
     //Standard parameters
@@ -67,6 +71,8 @@ public class Cache
 
     private void insertAddress(AddressSplit address)
     {
+        System.out.printf("%s\n", address);
+
         Set set = sets[address.getIndex()];
         Block removable;
 
@@ -85,45 +91,64 @@ public class Cache
             int removedAddr = (removable.getTag() * sets.length + address.getIndex()) * blockSize;
             AddressSplit removedAddress = new AddressSplit(removedAddr, indexBits, blockOffsetBits);
             for(int i = 0; i < blockSize; i++) getCPU().getPhysicalMemory().write(new AddressSplit(removedAddress, i), removedData[i]);
-            getCPU().getStatistics().incCompulsoryMisses();
+            getCPU().getStatistics().incConflictMisses(); //Valid, but tag did not match
         }
 
         //Record new data block
         int[] data = new int[blockSize];
         for(int i = 0; i < blockSize; i++) data[i] = getCPU().getPhysicalMemory().read(new AddressSplit(address, i));
-        getCPU().getStatistics().incCompulsoryMisses();
+        getCPU().getStatistics().incCompulsoryMisses(); //Neither valid nor did the tag match
         removable.fillBlock(address, data);
     }
 
-    protected boolean read(int addr)
+    protected boolean read(int addr, int bytes)
     {
-        AddressSplit address = new AddressSplit(addr, indexBits, blockOffsetBits);
+        AddressSplit original = new AddressSplit(addr, indexBits, blockOffsetBits);
 
-        if(isAddressNotInMemory(address))
+        for(int i = 0; i < bytes; i++)
         {
-            insertAddress(address);
-            return false;
+            AddressSplit address = new AddressSplit(addr + i, indexBits, blockOffsetBits);
+
+            //If we are reading from the same line in the cache, just skip it.
+            if(!address.isCopyOf(original) && address.getTag() == original.getTag() || address.getIndex() == original.getTag()) continue;
+
+            if(isAddressNotInMemory(address))
+            {
+                insertAddress(address);
+                return false;
+            }
+
+            Set set = sets[address.getIndex()];
+            getCPU().getStatistics().incHits();
+            int data = set.readByte(address);
         }
 
-        Set set = sets[address.getIndex()];
-        getCPU().getStatistics().incHits();
-        int data = set.readByte(address);
+        getCPU().getStatistics().incAddressAccess();
+
         return true;
     }
 
-    protected boolean write(int addr, int data)
+    protected boolean write(int addr, int data, int bytes)
     {
-        AddressSplit address = new AddressSplit(addr, indexBits, blockOffsetBits);
+        AddressSplit original = new AddressSplit(addr, indexBits, blockOffsetBits);
 
-        if(isAddressNotInMemory(address))
+        for(int i = 0; i < bytes; i++)
         {
-            insertAddress(address);
-            return false;
+            AddressSplit address = new AddressSplit(addr, indexBits, blockOffsetBits);
+
+            if(!address.isCopyOf(original) && (address.getTag() == original.getTag() || address.getIndex() == original.getTag())) continue;
+
+            if(isAddressNotInMemory(address))
+            {
+                insertAddress(address);
+                return false;
+            }
+
+            Set set = sets[address.getIndex()];
+            getCPU().getStatistics().incHits();
+            set.writeByte(address, data);
         }
 
-        Set set = sets[address.getIndex()];
-        getCPU().getStatistics().incHits();
-        set.writeByte(address, data);
         return true;
     }
 

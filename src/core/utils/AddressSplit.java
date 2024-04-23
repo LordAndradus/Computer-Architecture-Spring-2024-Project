@@ -26,6 +26,16 @@ public class AddressSplit
         this.offset = address & ((1 << blockOffsetBits) - 1);
     }
 
+    public boolean isCopyOf(AddressSplit original)
+    {
+        return getTag() == original.getTag() && getIndex() == original.getIndex() && getOffset() == original.getOffset();
+    }
+
+    public static AddressSplit copyOf(AddressSplit original)
+    {
+        return new AddressSplit(original.getAddress(), original.getIndexBits(), original.getOffsetBits());
+    }
+
     public int getIndexBits()
     {
         return indexBits;
@@ -59,5 +69,10 @@ public class AddressSplit
     public void setAddress(int address)
     {
         this.address = address;
+    }
+
+    public String toString()
+    {
+        return String.format("Address: 0x%08x | Tag: 0x%08x | Index: 0x%08x | Offset: 0x%08x", address, tag, index, offset);
     }
 }

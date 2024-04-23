@@ -111,7 +111,7 @@ public class CPU
                 String.format("%.2f", unusedKB),
                 getCache().getImplementationSizeKB(),
                 String.format("%.2f", (unusedKB / (getCache().getImplementationSizeKB())) * 100),
-                String.format("%.2f", (unusedKB / (getCache().getImplementationSizeKB())) * (cache.getImplementationSizeKB() * 0.15))));
+                String.format("%.2f", unusedKB * 0.15)));
 
         sb.append(String.format("Unused Cache Blocks:           %s / %s\n", getStatistics().getUnusedBlocks(), getCache().getNumBlocks()));
 
@@ -146,10 +146,12 @@ public class CPU
                                     1, elements[1].indexOf(")")
                             ));
 
-                    hit = cache.read(address);
+                    hit = cache.read(address, bytes);
 
-                    getStatistics().incCycles(this, hit, bytes);
-                    getStatistics().incCycle2();
+                    getStatistics().incInstructionBytes(bytes);
+                    getStatistics().incCycles(this, hit, bytes + 2);
+                    getStatistics().incCycles();
+                    getStatistics().incCycles();
                 }
                 else
                 {
@@ -158,15 +160,19 @@ public class CPU
 
                     if(dstAddr != 0)
                     {
-                        if(!elements[3].equals("--------")) cache.write(dstAddr, Calculator.hexToInteger(elements[3]));
-                        else hit = cache.read(dstAddr);
+                        if(!elements[3].equals("--------")) cache.write(dstAddr, Calculator.hexToInteger(elements[3]), bytes);
+                        else hit = cache.read(dstAddr, bytes);
 
+                        getStatistics().incMemoryBytes();
+                        getStatistics().incCycles();
                         getStatistics().incCycles(this, hit, bytes);
                     }
 
                     if(srcAddr != 0)
                     {
-                        hit = cache.read(srcAddr);
+                        hit = cache.read(srcAddr, bytes);
+                        getStatistics().incMemoryBytes();
+                        getStatistics().incCycles();
                         getStatistics().incCycles(this, hit, bytes);
                     }
                 }
@@ -265,14 +271,17 @@ public class CPU
             for(File trace : traces) sb.append(String.format("Trace file: %s\n", trace.getName()));
         }
 
+        //First Block
+        //Second Block
+        //Final Block
         sb.append(String.format("""
                 %s***** Cache Input Parameters *****
                 Cache Size:                     %s KB
                 Block Size:                     %s bytes
                 Associativity:                  %s
                 Replacement Policy              %s
-                Physical Memory                 %s MB
-                Percent Memory Used by System:  %s
+                Physical Memory                 %s
+                Percent Memory Used by System:  %.1f%%
                 Instructions / Time Slice:      %s
                 
                 ***** Cache Calculated Values *****
@@ -292,7 +301,7 @@ public class CPU
                 """, (traces.isEmpty()) ? "" : "\n",
                 //First Block
                 cache.getSize(), cache.getBlockSize(), cache.getAssociativity(), replacement.toString(),
-                physicalMemory.getSize() / (1024 * 1024), physicalMemory.getPercentMemoryUnused(), cache.getInstructionPerTimeSlice(),
+                physicalMemory.getSize() / (1024 * 1024), physicalMemory.getPercentMemoryUsed(), cache.getInstructionPerTimeSlice(),
                 //Second Block
                 cache.getNumBlocks(), cache.getNumTagBits(), cache.getNumIndexBits(), cache.getNumSets(),
                 cache.getOverHeadSize(), String.format("%.2f", cache.getImplementationSizeKB()),

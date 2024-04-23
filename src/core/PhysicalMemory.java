@@ -13,20 +13,21 @@ public class PhysicalMemory
     private int numSysPages;
     private int pageTableBits;
     private int pageTableRAM;
-    private int percentMemoryUsed;
-    private int percentMemoryUnused;
+    private double percentMemoryUsed;
+    private double percentMemoryUnused;
+    private int numProcesses;
 
     private HashMap<Integer, Integer> data;
 
-    public PhysicalMemory(long physicalMemorySize, int unusedPhysicalMemory)
+    public PhysicalMemory(long physicalMemorySize, double usedPhysicalMemory)
     {
         this.size = physicalMemorySize;
         data = new HashMap<>();
 
         numPages = (int) (size / 4096);
         pageTableBits = Calculator.getBasePower(numPages, 2) + 1;
-        this.percentMemoryUnused = unusedPhysicalMemory;
-        this.percentMemoryUsed = 100 - (unusedPhysicalMemory);
+        this.percentMemoryUsed = usedPhysicalMemory;
+        this.percentMemoryUnused = 100d - (usedPhysicalMemory);
         this.numSysPages = (int) ((double) numPages * ((double) percentMemoryUnused / 100d));
     }
 
@@ -66,18 +67,18 @@ public class PhysicalMemory
         return pageTableRAM;
     }
 
-    public int getPercentMemoryUsed()
+    public double getPercentMemoryUsed()
     {
         return percentMemoryUsed;
     }
 
-    public int getPercentMemoryUnused()
+    public double getPercentMemoryUnused()
     {
         return percentMemoryUnused;
     }
 
     public void setPageTableRAM(int size)
     {
-        pageTableRAM = ((pageTableBits * numPages * size) / 8) * 2;
+        pageTableRAM = (((pageTableBits * numPages * size) / 8) * 2);
     }
 }
